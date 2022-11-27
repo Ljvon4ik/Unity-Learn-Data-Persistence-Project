@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,21 +9,30 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
-    public GameObject GameOverText;
-    
+    public GameObject GameOverPanel;
+
     private bool m_Started = false;
     private int m_Points;
-    
+
     private bool m_GameOver = false;
 
-    
+    private string playerName;
+    public Text bestScoreText;
+    private int currentMinScore;
+    private SaveData data;
+
+    private string bestPlayerName;
+    private int bestScore;
+
+    [SerializeField]
+    private Text ratingText;
     // Start is called before the first frame update
     void Start()
     {
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
-        
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
+
+        int[] pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (int i = 0; i < LineCount; ++i)
         {
             for (int x = 0; x < perLine; ++x)
@@ -36,6 +43,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        LoadData();
     }
 
     private void Update()
@@ -59,6 +68,11 @@ public class MainManager : MonoBehaviour
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
+            else if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                SceneManager.LoadScene(0);
+            }
+
         }
     }
 
@@ -70,7 +84,23 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+
+        if (m_Points >= currentMinScore)
+        {
+            data.SaveScore(playerName, m_Points);
+        }
+
+        ratingText.text = data.ReadData();
         m_GameOver = true;
-        GameOverText.SetActive(true);
+        GameOverPanel.SetActive(true);
+    }
+
+    private void LoadData()
+    {
+        playerName = SaveName.Instance.playerName;
+        data = new SaveData();
+        currentMinScore = data.MinScore();
+        data.BestResult(out bestPlayerName, out bestScore);
+        bestScoreText.text = $"Best Score: {bestPlayerName} : {bestScore}";
     }
 }
